@@ -23,11 +23,11 @@ import java.util.List;
 //UsernamePasswordAuthenticationFilter 로 전달해야 할 것
 @RequiredArgsConstructor
 @Component
-public class JwtTokenProvider {
+public class JwtTokenProvider { //JWT 토큰을 생성 및 검증하는 모듈
 
     private String secretKey = "webfirewood";
 
-    //토큰 유효시간 30분
+    //토큰 유효시간 30분 - Ex) 1000L * 60 * 60 = 토큰 유효시간 1시간
     private long tokenValidTime = 30 * 60 * 1000L;
 
     //유저 정보를 UserDetails 타입으로 Spring Security 한테 제공하는 역할
@@ -57,7 +57,7 @@ public class JwtTokenProvider {
 
         //JWT : JSON 객체를 암호화 하여 만든 문자열 값으로 위변조가 어려운 정보
         return Jwts.builder()
-                .setClaims(claims) // 정보 저장
+                .setClaims(claims) // 정보 저장(데이터)
                 .setIssuedAt(now)  // 토큰 발행 시간 정보
                 .setExpiration(new Date(now.getTime() + tokenValidTime)) // 만료 시간 설정
                 .signWith(SignatureAlgorithm.HS256, secretKey) // 사용할 암호화 알고리즘, 서명에 들어갈 secret 값 세팅
@@ -72,17 +72,17 @@ public class JwtTokenProvider {
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
-    // 토큰에서 회원 정보 추출
+    // JWT 토큰에서 회원 구별 정보 추출
     public String getUserPk(String token) {
         return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
     }
 
-    // Request의 Header에서 token 값을 가져옵니다. "X-AUTH-TOKEN" : "TOKEN값'
+    // Request의 Header에서 token 파싱(token 값을 가져옵니다.) / "X-AUTH-TOKEN" : jwt 토큰
     public String resolveToken(HttpServletRequest request) {
         return request.getHeader("X-AUTH-TOKEN");
     }
 
-    // 토큰의 유효성 + 만료일자 확인
+    // JWT 토큰의 유효성 + 만료일자 확인
     public boolean validateToken(String jwtToken) {
 
         try {
